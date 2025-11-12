@@ -1,0 +1,13 @@
+.{
+    .name = .box2d,
+    .version = "3.1.1",
+    .fingerprint = 0xbbd8fcbd9341b172,
+    .minimum_zig_version = "0.14.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "box2d/include",
+        "box2d/src",
+    },
+}
