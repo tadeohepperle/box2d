@@ -631,8 +631,30 @@ pub const b2Mat22 = struct_b2Mat22;
 pub const struct_b2AABB = extern struct {
     lowerBound: Vec2 = Vec2{},
     upperBound: Vec2 = Vec2{},
+
+    const Self = @This();
+
+    pub fn make(points: []const Vec2, radius: f32) Self {
+        return b2MakeAABB(points.ptr, @as(c_int, @intCast(points.len)), radius);
+    }
+    pub fn contains(self: Self, other: Self) bool {
+        return b2AABB_Contains(self, other);
+    }
+    pub fn center(self: Self) Vec2 {
+        return b2AABB_Center(self);
+    }
+    pub fn extents(self: Self) Vec2 {
+        return b2AABB_Extents(self);
+    }
+    pub fn unionWith(self: Self, other: Self) Self {
+        return b2AABB_Union(self, other);
+    }
+    pub fn overlaps(self: Self, other: Self) bool {
+        return b2AABB_Overlaps(self, other);
+    }
 };
 pub const AABB = struct_b2AABB;
+
 pub const struct_b2Plane = extern struct {
     normal: Vec2 = Vec2{},
     offset: f32 = 0.0,
@@ -1328,8 +1350,8 @@ pub fn b2AABB_Overlaps(arg_a: AABB, arg_b: AABB) callconv(.c) bool {
     return !((((b.lowerBound.x > a.upperBound.x) or (b.lowerBound.y > a.upperBound.y)) or (a.lowerBound.x > b.upperBound.x)) or (a.lowerBound.y > b.upperBound.y));
 }
 // /home/tadeo/code/test/box2d2/box2d/include/box2d/base.h:94:23: warning: TODO implement function '__builtin_trap' in std.zig.c_builtins
-
 // /home/tadeo/code/test/box2d2/box2d/include/box2d/math_functions.h:625:18: warning: unable to translate function, demoted to extern
+
 pub extern fn b2MakeAABB(arg_points: [*]const Vec2, arg_count: c_int, arg_radius: f32) callconv(.c) AABB;
 pub fn b2PlaneSeparation(arg_plane: Plane, arg_point: Vec2) callconv(.c) f32 {
     var plane = arg_plane;
@@ -1362,31 +1384,72 @@ pub const struct_b2SimplexCache = extern struct {
     indexA: [3]u8 = [3]u8{ 0, 0, 0 },
     indexB: [3]u8 = [3]u8{ 0, 0, 0 },
 };
-pub const b2SimplexCache = struct_b2SimplexCache;
+pub const SimplexCache = struct_b2SimplexCache;
 pub const struct_b2Hull = extern struct {
     points: [8]Vec2 = zeroes([8]Vec2),
     count: c_int = 0,
+
+    const Self = @This();
+    pub fn compute(points: []const Vec2) Self {
+        b2ComputeHull(points.ptr, @as(c_int, @intCast(points.len)));
+    }
+    pub fn validate(self: *const Self) bool {
+        return b2ValidateHull(self);
+    }
 };
-pub const b2Hull = struct_b2Hull;
+pub const Hull = struct_b2Hull;
 pub const struct_b2RayCastInput = extern struct {
     origin: Vec2 = Vec2{},
     translation: Vec2 = Vec2{},
     maxFraction: f32 = 0.0,
+
+    const Self = @This();
+
+    pub fn isValid(self: *const Self) bool {
+        return b2IsValidRay(self);
+    }
+    pub fn castCircle(self: *const Self, shape: *const Circle) CastOutput {
+        return b2RayCastCircle(self, shape);
+    }
+    pub fn castCapsule(self: *const Self, shape: *const Capsule) CastOutput {
+        return b2RayCastCapsule(self, shape);
+    }
+    pub fn castSegment(self: *const Self, shape: *const Segment, oneSided: bool) CastOutput {
+        return b2RayCastSegment(self, shape, oneSided);
+    }
+    pub fn castPolygon(self: *const Self, shape: *const Polygon) CastOutput {
+        return b2RayCastPolygon(self, shape);
+    }
 };
-pub const b2RayCastInput = struct_b2RayCastInput;
+pub const RayCastInput = struct_b2RayCastInput;
 pub const struct_b2ShapeProxy = extern struct {
     points: [8]Vec2 = zeroes([8]Vec2),
     count: c_int = 0,
     radius: f32 = 0.0,
 };
-pub const b2ShapeProxy = struct_b2ShapeProxy;
+pub const ShapeProxy = struct_b2ShapeProxy;
 pub const struct_b2ShapeCastInput = extern struct {
-    proxy: b2ShapeProxy = zeroes(b2ShapeProxy),
+    proxy: ShapeProxy = zeroes(ShapeProxy),
     translation: Vec2 = Vec2{},
     maxFraction: f32 = 0.0,
     canEncroach: bool = false,
+
+    const Self = @This();
+
+    pub fn castCircle(self: *const Self, shape: *const Circle) CastOutput {
+        return b2ShapeCastCircle(self, shape);
+    }
+    pub fn castCapsule(self: *const Self, shape: *const Capsule) CastOutput {
+        return b2ShapeCastCapsule(self, shape);
+    }
+    pub fn castSegment(self: *const Self, shape: *const Segment) CastOutput {
+        return b2ShapeCastSegment(self, shape);
+    }
+    pub fn castPolygon(self: *const Self, shape: *const Polygon) CastOutput {
+        return b2ShapeCastPolygon(self, shape);
+    }
 };
-pub const b2ShapeCastInput = struct_b2ShapeCastInput;
+pub const ShapeCastInput = struct_b2ShapeCastInput;
 pub const struct_b2CastOutput = extern struct {
     normal: Vec2 = Vec2{},
     point: Vec2 = Vec2{},
@@ -1394,74 +1457,143 @@ pub const struct_b2CastOutput = extern struct {
     iterations: c_int = 0,
     hit: bool = false,
 };
-pub const b2CastOutput = struct_b2CastOutput;
+pub const CastOutput = struct_b2CastOutput;
 pub const struct_b2MassData = extern struct {
     mass: f32 = 0.0,
     center: Vec2 = Vec2{},
     rotationalInertia: f32 = 0.0,
 };
-pub const b2MassData = struct_b2MassData;
+pub const MassData = struct_b2MassData;
 pub const struct_b2Circle = extern struct {
     center: Vec2 = Vec2{},
     radius: f32 = 0.0,
+
+    const Self = @This();
+
+    pub fn computeAABB(self: *const Self, xform: Transform) AABB {
+        return b2ComputeCircleAABB(self, xform);
+    }
+    pub fn computeMass(self: *const Self, density: f32) MassData {
+        return b2ComputeCircleMass(self, density);
+    }
+    pub fn pointInCircle(point: Vec2, self: *const Self) bool {
+        return b2PointInCircle(point, self);
+    }
 };
-pub const b2Circle = struct_b2Circle;
+pub const Circle = struct_b2Circle;
 pub const struct_b2Capsule = extern struct {
     center1: Vec2 = Vec2{},
     center2: Vec2 = Vec2{},
     radius: f32 = 0.0,
+
+    const Self = @This();
+
+    pub fn computeMass(self: *const Self, density: f32) MassData {
+        return b2ComputeCapsuleMass(self, density);
+    }
+    pub fn computeAABB(self: *const Self, xform: Transform) AABB {
+        return b2ComputeCapsuleAABB(self, xform);
+    }
+    pub fn pointInCapsule(point: Vec2, self: *const Self) bool {
+        return b2PointInCapsule(point, self);
+    }
 };
-pub const b2Capsule = struct_b2Capsule;
+pub const Capsule = struct_b2Capsule;
 pub const struct_b2Polygon = extern struct {
     vertices: [8]Vec2 = zeroes([8]Vec2),
     normals: [8]Vec2 = zeroes([8]Vec2),
     centroid: Vec2 = Vec2{},
     radius: f32 = 0.0,
     count: c_int = 0,
+
+    const Self = @This();
+
+    pub fn make(hull: *const Hull, radius: f32) Self {
+        return b2MakePolygon(hull, radius);
+    }
+    pub fn makeOffset(hull: *const Hull, position: Vec2, rotation: Rot) Self {
+        return b2MakeOffsetPolygon(hull, position, rotation);
+    }
+    pub fn makeOffsetRounded(hull: *const Hull, position: Vec2, rotation: Rot, radius: f32) Self {
+        return b2MakeOffsetRoundedPolygon(hull, position, rotation, radius);
+    }
+    pub fn makeSquare(halfWidth: f32) Self {
+        return b2MakeSquare(halfWidth);
+    }
+    pub fn makeBox(halfWidth: f32, halfHeight: f32) Self {
+        return b2MakeBox(halfWidth, halfHeight);
+    }
+    pub fn makeRoundedBox(halfWidth: f32, halfHeight: f32, radius: f32) Self {
+        return b2MakeRoundedBox(halfWidth, halfHeight, radius);
+    }
+    pub fn makeOffsetBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot) Self {
+        return b2MakeOffsetBox(halfWidth, halfHeight, center, rotation);
+    }
+    pub fn makeOffsetRoundedBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot, radius: f32) Self {
+        return b2MakeOffsetRoundedBox(halfWidth, halfHeight, center, rotation, radius);
+    }
+    pub fn transform(self: *const Self, xform: Transform) Self {
+        return b2TransformPolygon(xform, self);
+    }
+    pub fn computeMass(self: *const Self, density: f32) MassData {
+        return b2ComputePolygonMass(self, density);
+    }
+    pub fn computeAABB(self: *const Self, xform: Transform) AABB {
+        return b2ComputePolygonAABB(self, xform);
+    }
+    pub fn containsPoint(point: Vec2, self: *const Self) bool {
+        return b2PointInPolygon(point, self);
+    }
 };
-pub const b2Polygon = struct_b2Polygon;
+pub const Polygon = struct_b2Polygon;
 pub const struct_b2Segment = extern struct {
     point1: Vec2 = Vec2{},
     point2: Vec2 = Vec2{},
+
+    const Self = @This();
+
+    pub fn computeAABB(self: *const Self, transform: Transform) AABB {
+        return b2ComputeSegmentAABB(self, transform);
+    }
 };
-pub const b2Segment = struct_b2Segment;
+pub const Segment = struct_b2Segment;
 pub const struct_b2ChainSegment = extern struct {
     ghost1: Vec2 = Vec2{},
-    segment: b2Segment = zeroes(b2Segment),
+    segment: Segment = zeroes(Segment),
     ghost2: Vec2 = Vec2{},
     chainId: c_int = 0,
 };
-pub const b2ChainSegment = struct_b2ChainSegment;
-pub extern fn b2IsValidRay(input: *const b2RayCastInput) bool;
-pub extern fn b2MakePolygon(hull: *const b2Hull, radius: f32) b2Polygon;
-pub extern fn b2MakeOffsetPolygon(hull: *const b2Hull, position: Vec2, rotation: Rot) b2Polygon;
-pub extern fn b2MakeOffsetRoundedPolygon(hull: *const b2Hull, position: Vec2, rotation: Rot, radius: f32) b2Polygon;
-pub extern fn b2MakeSquare(halfWidth: f32) b2Polygon;
-pub extern fn b2MakeBox(halfWidth: f32, halfHeight: f32) b2Polygon;
-pub extern fn b2MakeRoundedBox(halfWidth: f32, halfHeight: f32, radius: f32) b2Polygon;
-pub extern fn b2MakeOffsetBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot) b2Polygon;
-pub extern fn b2MakeOffsetRoundedBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot, radius: f32) b2Polygon;
-pub extern fn b2TransformPolygon(transform: Transform, polygon: *const b2Polygon) b2Polygon;
-pub extern fn b2ComputeCircleMass(shape: *const b2Circle, density: f32) b2MassData;
-pub extern fn b2ComputeCapsuleMass(shape: *const b2Capsule, density: f32) b2MassData;
-pub extern fn b2ComputePolygonMass(shape: *const b2Polygon, density: f32) b2MassData;
-pub extern fn b2ComputeCircleAABB(shape: *const b2Circle, transform: Transform) AABB;
-pub extern fn b2ComputeCapsuleAABB(shape: *const b2Capsule, transform: Transform) AABB;
-pub extern fn b2ComputePolygonAABB(shape: *const b2Polygon, transform: Transform) AABB;
-pub extern fn b2ComputeSegmentAABB(shape: *const b2Segment, transform: Transform) AABB;
-pub extern fn b2PointInCircle(point: Vec2, shape: *const b2Circle) bool;
-pub extern fn b2PointInCapsule(point: Vec2, shape: *const b2Capsule) bool;
-pub extern fn b2PointInPolygon(point: Vec2, shape: *const b2Polygon) bool;
-pub extern fn b2RayCastCircle(input: *const b2RayCastInput, shape: *const b2Circle) b2CastOutput;
-pub extern fn b2RayCastCapsule(input: *const b2RayCastInput, shape: *const b2Capsule) b2CastOutput;
-pub extern fn b2RayCastSegment(input: *const b2RayCastInput, shape: *const b2Segment, oneSided: bool) b2CastOutput;
-pub extern fn b2RayCastPolygon(input: *const b2RayCastInput, shape: *const b2Polygon) b2CastOutput;
-pub extern fn b2ShapeCastCircle(input: *const b2ShapeCastInput, shape: *const b2Circle) b2CastOutput;
-pub extern fn b2ShapeCastCapsule(input: *const b2ShapeCastInput, shape: *const b2Capsule) b2CastOutput;
-pub extern fn b2ShapeCastSegment(input: *const b2ShapeCastInput, shape: *const b2Segment) b2CastOutput;
-pub extern fn b2ShapeCastPolygon(input: *const b2ShapeCastInput, shape: *const b2Polygon) b2CastOutput;
-pub extern fn b2ComputeHull(points: [*]const Vec2, count: c_int) b2Hull;
-pub extern fn b2ValidateHull(hull: *const b2Hull) bool;
+pub const ChainSegment = struct_b2ChainSegment;
+pub extern fn b2IsValidRay(input: *const RayCastInput) bool;
+pub extern fn b2MakePolygon(hull: *const Hull, radius: f32) Polygon;
+pub extern fn b2MakeOffsetPolygon(hull: *const Hull, position: Vec2, rotation: Rot) Polygon;
+pub extern fn b2MakeOffsetRoundedPolygon(hull: *const Hull, position: Vec2, rotation: Rot, radius: f32) Polygon;
+pub extern fn b2MakeSquare(halfWidth: f32) Polygon;
+pub extern fn b2MakeBox(halfWidth: f32, halfHeight: f32) Polygon;
+pub extern fn b2MakeRoundedBox(halfWidth: f32, halfHeight: f32, radius: f32) Polygon;
+pub extern fn b2MakeOffsetBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot) Polygon;
+pub extern fn b2MakeOffsetRoundedBox(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot, radius: f32) Polygon;
+pub extern fn b2TransformPolygon(transform: Transform, polygon: *const Polygon) Polygon;
+pub extern fn b2ComputeCircleMass(shape: *const Circle, density: f32) MassData;
+pub extern fn b2ComputeCapsuleMass(shape: *const Capsule, density: f32) MassData;
+pub extern fn b2ComputePolygonMass(shape: *const Polygon, density: f32) MassData;
+pub extern fn b2ComputeCircleAABB(shape: *const Circle, transform: Transform) AABB;
+pub extern fn b2ComputeCapsuleAABB(shape: *const Capsule, transform: Transform) AABB;
+pub extern fn b2ComputePolygonAABB(shape: *const Polygon, transform: Transform) AABB;
+pub extern fn b2ComputeSegmentAABB(shape: *const Segment, transform: Transform) AABB;
+pub extern fn b2PointInCircle(point: Vec2, shape: *const Circle) bool;
+pub extern fn b2PointInCapsule(point: Vec2, shape: *const Capsule) bool;
+pub extern fn b2PointInPolygon(point: Vec2, shape: *const Polygon) bool;
+pub extern fn b2RayCastCircle(input: *const RayCastInput, shape: *const Circle) CastOutput;
+pub extern fn b2RayCastCapsule(input: *const RayCastInput, shape: *const Capsule) CastOutput;
+pub extern fn b2RayCastSegment(input: *const RayCastInput, shape: *const Segment, oneSided: bool) CastOutput;
+pub extern fn b2RayCastPolygon(input: *const RayCastInput, shape: *const Polygon) CastOutput;
+pub extern fn b2ShapeCastCircle(input: *const ShapeCastInput, shape: *const Circle) CastOutput;
+pub extern fn b2ShapeCastCapsule(input: *const ShapeCastInput, shape: *const Capsule) CastOutput;
+pub extern fn b2ShapeCastSegment(input: *const ShapeCastInput, shape: *const Segment) CastOutput;
+pub extern fn b2ShapeCastPolygon(input: *const ShapeCastInput, shape: *const Polygon) CastOutput;
+pub extern fn b2ComputeHull(points: [*]const Vec2, count: c_int) Hull;
+pub extern fn b2ValidateHull(hull: *const Hull) bool;
 pub const struct_b2SegmentDistanceResult = extern struct {
     closest1: Vec2 = Vec2{},
     closest2: Vec2 = Vec2{},
@@ -1469,21 +1601,21 @@ pub const struct_b2SegmentDistanceResult = extern struct {
     fraction2: f32 = 0.0,
     distanceSquared: f32 = 0.0,
 };
-pub const b2SegmentDistanceResult = struct_b2SegmentDistanceResult;
-pub extern fn b2SegmentDistance(p1: Vec2, q1: Vec2, p2: Vec2, q2: Vec2) b2SegmentDistanceResult;
-pub const b2_emptySimplexCache: b2SimplexCache = b2SimplexCache{
+pub const SegmentDistanceResult = struct_b2SegmentDistanceResult;
+pub extern fn b2SegmentDistance(p1: Vec2, q1: Vec2, p2: Vec2, q2: Vec2) SegmentDistanceResult;
+pub const b2_emptySimplexCache: SimplexCache = SimplexCache{
     .count = @as(u16, @bitCast(@as(c_short, @truncate(@as(c_int, 0))))),
     .indexA = [3]u8{ 0, 0, 0 },
     .indexB = [3]u8{ 0, 0, 0 },
 };
 pub const struct_b2DistanceInput = extern struct {
-    proxyA: b2ShapeProxy = zeroes(b2ShapeProxy),
-    proxyB: b2ShapeProxy = zeroes(b2ShapeProxy),
+    proxyA: ShapeProxy = zeroes(ShapeProxy),
+    proxyB: ShapeProxy = zeroes(ShapeProxy),
     transformA: Transform = zeroes(Transform),
     transformB: Transform = zeroes(Transform),
     useRadii: bool = false,
 };
-pub const b2DistanceInput = struct_b2DistanceInput;
+pub const DistanceInput = struct_b2DistanceInput;
 pub const struct_b2DistanceOutput = extern struct {
     pointA: Vec2 = Vec2{},
     pointB: Vec2 = Vec2{},
@@ -1492,7 +1624,7 @@ pub const struct_b2DistanceOutput = extern struct {
     iterations: c_int = 0,
     simplexCount: c_int = 0,
 };
-pub const b2DistanceOutput = struct_b2DistanceOutput;
+pub const DistanceOutput = struct_b2DistanceOutput;
 pub const struct_b2SimplexVertex = extern struct {
     wA: Vec2 = Vec2{},
     wB: Vec2 = Vec2{},
@@ -1501,28 +1633,28 @@ pub const struct_b2SimplexVertex = extern struct {
     indexA: c_int = 0,
     indexB: c_int = 0,
 };
-pub const b2SimplexVertex = struct_b2SimplexVertex;
+pub const SimplexVertex = struct_b2SimplexVertex;
 pub const struct_b2Simplex = extern struct {
-    v1: b2SimplexVertex = zeroes(b2SimplexVertex),
-    v2: b2SimplexVertex = zeroes(b2SimplexVertex),
-    v3: b2SimplexVertex = zeroes(b2SimplexVertex),
+    v1: SimplexVertex = zeroes(SimplexVertex),
+    v2: SimplexVertex = zeroes(SimplexVertex),
+    v3: SimplexVertex = zeroes(SimplexVertex),
     count: c_int = 0,
 };
-pub const b2Simplex = struct_b2Simplex;
-pub extern fn b2ShapeDistance(input: *const b2DistanceInput, cache: *b2SimplexCache, simplexes: [*]b2Simplex, simplexCapacity: c_int) b2DistanceOutput;
+pub const Simplex = struct_b2Simplex;
+pub extern fn b2ShapeDistance(input: *const DistanceInput, cache: *SimplexCache, simplexes: [*]Simplex, simplexCapacity: c_int) DistanceOutput;
 pub const struct_b2ShapeCastPairInput = extern struct {
-    proxyA: b2ShapeProxy = zeroes(b2ShapeProxy),
-    proxyB: b2ShapeProxy = zeroes(b2ShapeProxy),
+    proxyA: ShapeProxy = zeroes(ShapeProxy),
+    proxyB: ShapeProxy = zeroes(ShapeProxy),
     transformA: Transform = zeroes(Transform),
     transformB: Transform = zeroes(Transform),
     translationB: Vec2 = Vec2{},
     maxFraction: f32 = 0.0,
     canEncroach: bool = false,
 };
-pub const b2ShapeCastPairInput = struct_b2ShapeCastPairInput;
-pub extern fn b2ShapeCast(input: *const b2ShapeCastPairInput) b2CastOutput;
-pub extern fn b2MakeProxy(points: [*]const Vec2, count: c_int, radius: f32) b2ShapeProxy;
-pub extern fn b2MakeOffsetProxy(points: [*]const Vec2, count: c_int, radius: f32, position: Vec2, rotation: Rot) b2ShapeProxy;
+pub const ShapeCastPairInput = struct_b2ShapeCastPairInput;
+pub extern fn b2ShapeCast(input: *const ShapeCastPairInput) CastOutput;
+pub extern fn b2MakeProxy(points: [*]const Vec2, count: c_int, radius: f32) ShapeProxy;
+pub extern fn b2MakeOffsetProxy(points: [*]const Vec2, count: c_int, radius: f32, position: Vec2, rotation: Rot) ShapeProxy;
 pub const struct_b2Sweep = extern struct {
     localCenter: Vec2 = Vec2{},
     c1: Vec2 = Vec2{},
@@ -1530,29 +1662,29 @@ pub const struct_b2Sweep = extern struct {
     q1: Rot = Rot{},
     q2: Rot = Rot{},
 };
-pub const b2Sweep = struct_b2Sweep;
-pub extern fn b2GetSweepTransform(sweep: *const b2Sweep, time: f32) Transform;
+pub const Sweep = struct_b2Sweep;
+pub extern fn b2GetSweepTransform(sweep: *const Sweep, time: f32) Transform;
 pub const struct_b2TOIInput = extern struct {
-    proxyA: b2ShapeProxy = zeroes(b2ShapeProxy),
-    proxyB: b2ShapeProxy = zeroes(b2ShapeProxy),
-    sweepA: b2Sweep = zeroes(b2Sweep),
-    sweepB: b2Sweep = zeroes(b2Sweep),
+    proxyA: ShapeProxy = zeroes(ShapeProxy),
+    proxyB: ShapeProxy = zeroes(ShapeProxy),
+    sweepA: Sweep = zeroes(Sweep),
+    sweepB: Sweep = zeroes(Sweep),
     maxFraction: f32 = 0.0,
 };
-pub const b2TOIInput = struct_b2TOIInput;
+pub const TOIInput = struct_b2TOIInput;
 pub const b2_toiStateUnknown: c_int = 0;
 pub const b2_toiStateFailed: c_int = 1;
 pub const b2_toiStateOverlapped: c_int = 2;
 pub const b2_toiStateHit: c_int = 3;
 pub const b2_toiStateSeparated: c_int = 4;
 pub const enum_b2TOIState = c_uint;
-pub const b2TOIState = enum_b2TOIState;
+pub const TOIState = enum_b2TOIState;
 pub const struct_b2TOIOutput = extern struct {
-    state: b2TOIState = zeroes(b2TOIState),
+    state: TOIState = zeroes(TOIState),
     fraction: f32 = 0.0,
 };
-pub const b2TOIOutput = struct_b2TOIOutput;
-pub extern fn b2TimeOfImpact(input: *const b2TOIInput) b2TOIOutput;
+pub const TOIOutput = struct_b2TOIOutput;
+pub extern fn b2TimeOfImpact(input: *const TOIInput) TOIOutput;
 pub const struct_b2ManifoldPoint = extern struct {
     point: Vec2 = Vec2{},
     anchorA: Vec2 = Vec2{},
@@ -1565,26 +1697,26 @@ pub const struct_b2ManifoldPoint = extern struct {
     id: u16 = 0,
     persisted: bool = false,
 };
-pub const b2ManifoldPoint = struct_b2ManifoldPoint;
+pub const ManifoldPoint = struct_b2ManifoldPoint;
 pub const struct_b2Manifold = extern struct {
     normal: Vec2 = Vec2{},
     rollingImpulse: f32 = 0.0,
-    points: [2]b2ManifoldPoint = zeroes([2]b2ManifoldPoint),
+    points: [2]ManifoldPoint = zeroes([2]ManifoldPoint),
     pointCount: c_int = 0,
 };
-pub const b2Manifold = struct_b2Manifold;
-pub extern fn b2CollideCircles(circleA: *const b2Circle, xfA: Transform, circleB: *const b2Circle, xfB: Transform) b2Manifold;
-pub extern fn b2CollideCapsuleAndCircle(capsuleA: *const b2Capsule, xfA: Transform, circleB: *const b2Circle, xfB: Transform) b2Manifold;
-pub extern fn b2CollideSegmentAndCircle(segmentA: *const b2Segment, xfA: Transform, circleB: *const b2Circle, xfB: Transform) b2Manifold;
-pub extern fn b2CollidePolygonAndCircle(polygonA: *const b2Polygon, xfA: Transform, circleB: *const b2Circle, xfB: Transform) b2Manifold;
-pub extern fn b2CollideCapsules(capsuleA: *const b2Capsule, xfA: Transform, capsuleB: *const b2Capsule, xfB: Transform) b2Manifold;
-pub extern fn b2CollideSegmentAndCapsule(segmentA: *const b2Segment, xfA: Transform, capsuleB: *const b2Capsule, xfB: Transform) b2Manifold;
-pub extern fn b2CollidePolygonAndCapsule(polygonA: *const b2Polygon, xfA: Transform, capsuleB: *const b2Capsule, xfB: Transform) b2Manifold;
-pub extern fn b2CollidePolygons(polygonA: *const b2Polygon, xfA: Transform, polygonB: *const b2Polygon, xfB: Transform) b2Manifold;
-pub extern fn b2CollideSegmentAndPolygon(segmentA: *const b2Segment, xfA: Transform, polygonB: *const b2Polygon, xfB: Transform) b2Manifold;
-pub extern fn b2CollideChainSegmentAndCircle(segmentA: *const b2ChainSegment, xfA: Transform, circleB: *const b2Circle, xfB: Transform) b2Manifold;
-pub extern fn b2CollideChainSegmentAndCapsule(segmentA: *const b2ChainSegment, xfA: Transform, capsuleB: *const b2Capsule, xfB: Transform, cache: *b2SimplexCache) b2Manifold;
-pub extern fn b2CollideChainSegmentAndPolygon(segmentA: *const b2ChainSegment, xfA: Transform, polygonB: *const b2Polygon, xfB: Transform, cache: *b2SimplexCache) b2Manifold;
+pub const Manifold = struct_b2Manifold;
+pub extern fn b2CollideCircles(circleA: *const Circle, xfA: Transform, circleB: *const Circle, xfB: Transform) Manifold;
+pub extern fn b2CollideCapsuleAndCircle(capsuleA: *const Capsule, xfA: Transform, circleB: *const Circle, xfB: Transform) Manifold;
+pub extern fn b2CollideSegmentAndCircle(segmentA: *const Segment, xfA: Transform, circleB: *const Circle, xfB: Transform) Manifold;
+pub extern fn b2CollidePolygonAndCircle(polygonA: *const Polygon, xfA: Transform, circleB: *const Circle, xfB: Transform) Manifold;
+pub extern fn b2CollideCapsules(capsuleA: *const Capsule, xfA: Transform, capsuleB: *const Capsule, xfB: Transform) Manifold;
+pub extern fn b2CollideSegmentAndCapsule(segmentA: *const Segment, xfA: Transform, capsuleB: *const Capsule, xfB: Transform) Manifold;
+pub extern fn b2CollidePolygonAndCapsule(polygonA: *const Polygon, xfA: Transform, capsuleB: *const Capsule, xfB: Transform) Manifold;
+pub extern fn b2CollidePolygons(polygonA: *const Polygon, xfA: Transform, polygonB: *const Polygon, xfB: Transform) Manifold;
+pub extern fn b2CollideSegmentAndPolygon(segmentA: *const Segment, xfA: Transform, polygonB: *const Polygon, xfB: Transform) Manifold;
+pub extern fn b2CollideChainSegmentAndCircle(segmentA: *const ChainSegment, xfA: Transform, circleB: *const Circle, xfB: Transform) Manifold;
+pub extern fn b2CollideChainSegmentAndCapsule(segmentA: *const ChainSegment, xfA: Transform, capsuleB: *const Capsule, xfB: Transform, cache: *SimplexCache) Manifold;
+pub extern fn b2CollideChainSegmentAndPolygon(segmentA: *const ChainSegment, xfA: Transform, polygonB: *const Polygon, xfB: Transform, cache: *SimplexCache) Manifold;
 pub const struct_b2TreeNode_2 = opaque {};
 pub const struct_b2DynamicTree = extern struct {
     nodes: ?*struct_b2TreeNode_2 = zeroes(?*struct_b2TreeNode_2),
@@ -1604,7 +1736,7 @@ pub const struct_b2TreeStats = extern struct {
     nodeVisits: c_int = 0,
     leafVisits: c_int = 0,
 };
-pub const b2TreeStats = struct_b2TreeStats;
+pub const TreeStats = struct_b2TreeStats;
 pub extern fn b2DynamicTree_Create() b2DynamicTree;
 pub extern fn b2DynamicTree_Destroy(tree: *b2DynamicTree) void;
 pub extern fn b2DynamicTree_CreateProxy(tree: *b2DynamicTree, aabb: AABB, categoryBits: u64, userData: u64) c_int;
@@ -1613,12 +1745,12 @@ pub extern fn b2DynamicTree_MoveProxy(tree: *b2DynamicTree, proxyId: c_int, aabb
 pub extern fn b2DynamicTree_EnlargeProxy(tree: *b2DynamicTree, proxyId: c_int, aabb: AABB) void;
 pub extern fn b2DynamicTree_SetCategoryBits(tree: *b2DynamicTree, proxyId: c_int, categoryBits: u64) void;
 pub extern fn b2DynamicTree_GetCategoryBits(tree: *b2DynamicTree, proxyId: c_int) u64;
-pub const b2TreeQueryCallbackFcn = fn (c_int, u64, ?*anyopaque) callconv(.c) bool;
-pub extern fn b2DynamicTree_Query(tree: *const b2DynamicTree, aabb: AABB, maskBits: u64, callback: ?*const b2TreeQueryCallbackFcn, context: ?*anyopaque) b2TreeStats;
-pub const b2TreeRayCastCallbackFcn = fn (*const b2RayCastInput, c_int, u64, ?*anyopaque) callconv(.c) f32;
-pub extern fn b2DynamicTree_RayCast(tree: *const b2DynamicTree, input: *const b2RayCastInput, maskBits: u64, callback: ?*const b2TreeRayCastCallbackFcn, context: ?*anyopaque) b2TreeStats;
-pub const b2TreeShapeCastCallbackFcn = fn (*const b2ShapeCastInput, c_int, u64, ?*anyopaque) callconv(.c) f32;
-pub extern fn b2DynamicTree_ShapeCast(tree: *const b2DynamicTree, input: *const b2ShapeCastInput, maskBits: u64, callback: ?*const b2TreeShapeCastCallbackFcn, context: ?*anyopaque) b2TreeStats;
+pub const TreeQueryCallbackFcn = fn (c_int, u64, ?*anyopaque) callconv(.c) bool;
+pub extern fn b2DynamicTree_Query(tree: *const b2DynamicTree, aabb: AABB, maskBits: u64, callback: ?*const TreeQueryCallbackFcn, context: ?*anyopaque) TreeStats;
+pub const TreeRayCastCallbackFcn = fn (*const RayCastInput, c_int, u64, ?*anyopaque) callconv(.c) f32;
+pub extern fn b2DynamicTree_RayCast(tree: *const b2DynamicTree, input: *const RayCastInput, maskBits: u64, callback: ?*const TreeRayCastCallbackFcn, context: ?*anyopaque) TreeStats;
+pub const TreeShapeCastCallbackFcn = fn (*const ShapeCastInput, c_int, u64, ?*anyopaque) callconv(.c) f32;
+pub extern fn b2DynamicTree_ShapeCast(tree: *const b2DynamicTree, input: *const ShapeCastInput, maskBits: u64, callback: ?*const TreeShapeCastCallbackFcn, context: ?*anyopaque) TreeStats;
 pub extern fn b2DynamicTree_GetHeight(tree: *const b2DynamicTree) c_int;
 pub extern fn b2DynamicTree_GetAreaRatio(tree: *const b2DynamicTree) f32;
 pub extern fn b2DynamicTree_GetRootBounds(tree: *const b2DynamicTree) AABB;
@@ -1683,25 +1815,25 @@ pub const World = enum(u32) {
     pub fn getContactEvents(self: Self) ContactEvents {
         return b2World_GetContactEvents(self);
     }
-    pub fn overlapAABB(self: Self, aabb: AABB, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) b2TreeStats {
+    pub fn overlapAABB(self: Self, aabb: AABB, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) TreeStats {
         return b2World_OverlapAABB(self, aabb, filter, fcn, context);
     }
-    pub fn overlapShape(self: Self, proxy: *const b2ShapeProxy, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) b2TreeStats {
+    pub fn overlapShape(self: Self, proxy: *const ShapeProxy, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) TreeStats {
         return b2World_OverlapShape(self, proxy, filter, fcn, context);
     }
-    pub fn castRay(self: Self, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) b2TreeStats {
+    pub fn castRay(self: Self, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) TreeStats {
         return b2World_CastRay(self, origin, translation, filter, fcn, context);
     }
     pub fn castRayClosest(self: Self, origin: Vec2, translation: Vec2, filter: QueryFilter) RayResult {
         return b2World_CastRayClosest(self, origin, translation, filter);
     }
-    pub fn castShape(self: Self, proxy: *const b2ShapeProxy, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) b2TreeStats {
+    pub fn castShape(self: Self, proxy: *const ShapeProxy, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) TreeStats {
         return b2World_CastShape(self, proxy, translation, filter, fcn, context);
     }
-    pub fn castMover(self: Self, mover: *const b2Capsule, translation: Vec2, filter: QueryFilter) f32 {
+    pub fn castMover(self: Self, mover: *const Capsule, translation: Vec2, filter: QueryFilter) f32 {
         return b2World_CastMover(self, mover, translation, filter);
     }
-    pub fn collideMover(self: Self, mover: *const b2Capsule, filter: QueryFilter, fcn: ?*const PlaneResultFcn, context: ?*anyopaque) void {
+    pub fn collideMover(self: Self, mover: *const Capsule, filter: QueryFilter, fcn: ?*const PlaneResultFcn, context: ?*anyopaque) void {
         b2World_CollideMover(self, mover, filter, fcn, context);
     }
     pub fn enableSleeping(self: Self, flag: bool) void {
@@ -1907,10 +2039,10 @@ pub const Body = enum(u64) {
     pub fn getWorldCenterOfMass(self: Self) Vec2 {
         return b2Body_GetWorldCenterOfMass(self);
     }
-    pub fn setMassData(self: Self, massData: b2MassData) void {
+    pub fn setMassData(self: Self, massData: MassData) void {
         b2Body_SetMassData(self, massData);
     }
-    pub fn getMassData(self: Self) b2MassData {
+    pub fn getMassData(self: Self) MassData {
         return b2Body_GetMassData(self);
     }
     pub fn applyMassFromShapes(self: Self) void {
@@ -2005,16 +2137,16 @@ pub const Body = enum(u64) {
     }
     // helpers:
 
-    pub fn createCircleShape(self: Self, def: *const ShapeDef, circle: *const b2Circle) Shape {
+    pub fn createCircleShape(self: Self, def: *const ShapeDef, circle: *const Circle) Shape {
         return b2CreateCircleShape(self, def, circle);
     }
-    pub fn createSegmentShape(self: Self, def: *const ShapeDef, segment: *const b2Segment) Shape {
+    pub fn createSegmentShape(self: Self, def: *const ShapeDef, segment: *const Segment) Shape {
         return b2CreateSegmentShape(self, def, segment);
     }
-    pub fn createCapsuleShape(self: Self, def: *const ShapeDef, capsule: *const b2Capsule) Shape {
+    pub fn createCapsuleShape(self: Self, def: *const ShapeDef, capsule: *const Capsule) Shape {
         return b2CreateCapsuleShape(self, def, capsule);
     }
-    pub fn createPolygonShape(self: Self, def: *const ShapeDef, polygon: *const b2Polygon) Shape {
+    pub fn createPolygonShape(self: Self, def: *const ShapeDef, polygon: *const Polygon) Shape {
         return b2CreatePolygonShape(self, def, polygon);
     }
     pub fn createChain(self: Self, def: *const ChainDef) Chain {
@@ -2033,16 +2165,16 @@ pub const Shape = enum(u64) {
 
     const Self = @This();
 
-    pub fn createCircle(body: Body, def: *const ShapeDef, circle: *const b2Circle) Self {
+    pub fn createCircle(body: Body, def: *const ShapeDef, circle: *const Circle) Self {
         return b2CreateCircleShape(body, def, circle);
     }
-    pub fn createSegment(body: Body, def: *const ShapeDef, segment: *const b2Segment) Self {
+    pub fn createSegment(body: Body, def: *const ShapeDef, segment: *const Segment) Self {
         return b2CreateSegmentShape(body, def, segment);
     }
-    pub fn createCapsule(body: Body, def: *const ShapeDef, capsule: *const b2Capsule) Self {
+    pub fn createCapsule(body: Body, def: *const ShapeDef, capsule: *const Capsule) Self {
         return b2CreateCapsuleShape(body, def, capsule);
     }
-    pub fn createPolygon(body: Body, def: *const ShapeDef, polygon: *const b2Polygon) Self {
+    pub fn createPolygon(body: Body, def: *const ShapeDef, polygon: *const Polygon) Self {
         return b2CreatePolygonShape(body, def, polygon);
     }
     pub fn destroy(self: Shape, update_body_mass: bool) void {
@@ -2132,34 +2264,34 @@ pub const Shape = enum(u64) {
     pub fn testPoint(self: Self, point: Vec2) bool {
         return b2Shape_TestPoint(self, point);
     }
-    pub fn rayCast(self: Self, input: *const b2RayCastInput) b2CastOutput {
+    pub fn rayCast(self: Self, input: *const RayCastInput) CastOutput {
         return b2Shape_RayCast(self, input);
     }
-    pub fn getCircle(self: Self) b2Circle {
+    pub fn getCircle(self: Self) Circle {
         return b2Shape_GetCircle(self);
     }
-    pub fn getSegment(self: Self) b2Segment {
+    pub fn getSegment(self: Self) Segment {
         return b2Shape_GetSegment(self);
     }
-    pub fn getChainSegment(self: Self) b2ChainSegment {
+    pub fn getChainSegment(self: Self) ChainSegment {
         return b2Shape_GetChainSegment(self);
     }
-    pub fn getCapsule(self: Self) b2Capsule {
+    pub fn getCapsule(self: Self) Capsule {
         return b2Shape_GetCapsule(self);
     }
-    pub fn getPolygon(self: Self) b2Polygon {
+    pub fn getPolygon(self: Self) Polygon {
         return b2Shape_GetPolygon(self);
     }
-    pub fn setCircle(self: Self, circle: *const b2Circle) void {
+    pub fn setCircle(self: Self, circle: *const Circle) void {
         b2Shape_SetCircle(self, circle);
     }
-    pub fn setCapsule(self: Self, capsule: *const b2Capsule) void {
+    pub fn setCapsule(self: Self, capsule: *const Capsule) void {
         b2Shape_SetCapsule(self, capsule);
     }
-    pub fn setSegment(self: Self, segment: *const b2Segment) void {
+    pub fn setSegment(self: Self, segment: *const Segment) void {
         b2Shape_SetSegment(self, segment);
     }
-    pub fn setPolygon(self: Self, polygon: *const b2Polygon) void {
+    pub fn setPolygon(self: Self, polygon: *const Polygon) void {
         b2Shape_SetPolygon(self, polygon);
     }
     pub fn getParentChain(self: Self) Chain {
@@ -2180,7 +2312,7 @@ pub const Shape = enum(u64) {
     pub fn getAABB(self: Self) AABB {
         return b2Shape_GetAABB(self);
     }
-    pub fn getMassData(self: Self) b2MassData {
+    pub fn getMassData(self: Self) MassData {
         return b2Shape_GetMassData(self);
     }
     pub fn getClosestPoint(self: Self, target: Vec2) Vec2 {
@@ -2912,7 +3044,7 @@ pub const struct_b2BodyDef = extern struct {
     angularDamping: f32 = 0.0,
     gravityScale: f32 = 0.0,
     sleepThreshold: f32 = 0.0,
-    name: [*:0]const u8 = zeroes([*:0]const u8),
+    name: [*:0]const u8 = "",
     userData: ?*anyopaque = null,
     enableSleep: bool = false,
     isAwake: bool = false,
@@ -3291,7 +3423,7 @@ pub const SensorEvents = struct_b2SensorEvents;
 pub const struct_b2ContactBeginTouchEvent = extern struct {
     shapeIdA: Shape = zeroes(Shape),
     shapeIdB: Shape = zeroes(Shape),
-    manifold: b2Manifold = zeroes(b2Manifold),
+    manifold: Manifold = zeroes(Manifold),
 };
 pub const ContactBeginTouchEvent = struct_b2ContactBeginTouchEvent;
 pub const struct_b2ContactEndTouchEvent = extern struct {
@@ -3331,11 +3463,11 @@ pub const BodyEvents = struct_b2BodyEvents;
 pub const struct_b2ContactData = extern struct {
     shapeIdA: Shape = zeroes(Shape),
     shapeIdB: Shape = zeroes(Shape),
-    manifold: b2Manifold = zeroes(b2Manifold),
+    manifold: Manifold = zeroes(Manifold),
 };
 pub const ContactData = struct_b2ContactData;
 pub const CustomFilterFcn = fn (Shape, Shape, ?*anyopaque) callconv(.c) bool;
-pub const PreSolveFcn = fn (Shape, Shape, [*c]b2Manifold, ?*anyopaque) callconv(.c) bool;
+pub const PreSolveFcn = fn (Shape, Shape, [*c]Manifold, ?*anyopaque) callconv(.c) bool;
 pub const OverlapResultFcn = fn (Shape, ?*anyopaque) callconv(.c) bool;
 pub const CastResultFcn = fn (Shape, Vec2, Vec2, f32, ?*anyopaque) callconv(.c) f32;
 pub const PlaneResultFcn = fn (Shape, [*c]const PlaneResult, ?*anyopaque) callconv(.c) bool;
@@ -3528,13 +3660,13 @@ pub extern fn b2World_Draw(worldId: World, draw: *DebugDraw) void;
 pub extern fn b2World_GetBodyEvents(worldId: World) BodyEvents;
 pub extern fn b2World_GetSensorEvents(worldId: World) SensorEvents;
 pub extern fn b2World_GetContactEvents(worldId: World) ContactEvents;
-pub extern fn b2World_OverlapAABB(worldId: World, aabb: AABB, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) b2TreeStats;
-pub extern fn b2World_OverlapShape(worldId: World, proxy: *const b2ShapeProxy, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) b2TreeStats;
-pub extern fn b2World_CastRay(worldId: World, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) b2TreeStats;
+pub extern fn b2World_OverlapAABB(worldId: World, aabb: AABB, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) TreeStats;
+pub extern fn b2World_OverlapShape(worldId: World, proxy: *const ShapeProxy, filter: QueryFilter, fcn: ?*const OverlapResultFcn, context: ?*anyopaque) TreeStats;
+pub extern fn b2World_CastRay(worldId: World, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) TreeStats;
 pub extern fn b2World_CastRayClosest(worldId: World, origin: Vec2, translation: Vec2, filter: QueryFilter) RayResult;
-pub extern fn b2World_CastShape(worldId: World, proxy: *const b2ShapeProxy, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) b2TreeStats;
-pub extern fn b2World_CastMover(worldId: World, mover: *const b2Capsule, translation: Vec2, filter: QueryFilter) f32;
-pub extern fn b2World_CollideMover(worldId: World, mover: *const b2Capsule, filter: QueryFilter, fcn: ?*const PlaneResultFcn, context: ?*anyopaque) void;
+pub extern fn b2World_CastShape(worldId: World, proxy: *const ShapeProxy, translation: Vec2, filter: QueryFilter, fcn: ?*const CastResultFcn, context: ?*anyopaque) TreeStats;
+pub extern fn b2World_CastMover(worldId: World, mover: *const Capsule, translation: Vec2, filter: QueryFilter) f32;
+pub extern fn b2World_CollideMover(worldId: World, mover: *const Capsule, filter: QueryFilter, fcn: ?*const PlaneResultFcn, context: ?*anyopaque) void;
 pub extern fn b2World_EnableSleeping(worldId: World, flag: bool) void;
 pub extern fn b2World_IsSleepingEnabled(worldId: World) bool;
 pub extern fn b2World_EnableContinuous(worldId: World, flag: bool) void;
@@ -3597,8 +3729,8 @@ pub extern fn b2Body_GetMass(bodyId: Body) f32;
 pub extern fn b2Body_GetRotationalInertia(bodyId: Body) f32;
 pub extern fn b2Body_GetLocalCenterOfMass(bodyId: Body) Vec2;
 pub extern fn b2Body_GetWorldCenterOfMass(bodyId: Body) Vec2;
-pub extern fn b2Body_SetMassData(bodyId: Body, massData: b2MassData) void;
-pub extern fn b2Body_GetMassData(bodyId: Body) b2MassData;
+pub extern fn b2Body_SetMassData(bodyId: Body, massData: MassData) void;
+pub extern fn b2Body_GetMassData(bodyId: Body) MassData;
 pub extern fn b2Body_ApplyMassFromShapes(bodyId: Body) void;
 pub extern fn b2Body_SetLinearDamping(bodyId: Body, linearDamping: f32) void;
 pub extern fn b2Body_GetLinearDamping(bodyId: Body) f32;
@@ -3629,10 +3761,10 @@ pub extern fn b2Body_GetJoints(bodyId: Body, jointArray: [*]Joint, capacity: c_i
 pub extern fn b2Body_GetContactCapacity(bodyId: Body) c_int;
 pub extern fn b2Body_GetContactData(bodyId: Body, contactData: [*]ContactData, capacity: c_int) c_int;
 pub extern fn b2Body_ComputeAABB(bodyId: Body) AABB;
-pub extern fn b2CreateCircleShape(bodyId: Body, def: *const ShapeDef, circle: *const b2Circle) Shape;
-pub extern fn b2CreateSegmentShape(bodyId: Body, def: *const ShapeDef, segment: *const b2Segment) Shape;
-pub extern fn b2CreateCapsuleShape(bodyId: Body, def: *const ShapeDef, capsule: *const b2Capsule) Shape;
-pub extern fn b2CreatePolygonShape(bodyId: Body, def: *const ShapeDef, polygon: *const b2Polygon) Shape;
+pub extern fn b2CreateCircleShape(bodyId: Body, def: *const ShapeDef, circle: *const Circle) Shape;
+pub extern fn b2CreateSegmentShape(bodyId: Body, def: *const ShapeDef, segment: *const Segment) Shape;
+pub extern fn b2CreateCapsuleShape(bodyId: Body, def: *const ShapeDef, capsule: *const Capsule) Shape;
+pub extern fn b2CreatePolygonShape(bodyId: Body, def: *const ShapeDef, polygon: *const Polygon) Shape;
 pub extern fn b2DestroyShape(shapeId: Shape, updateBodyMass: bool) void;
 pub extern fn b2Shape_IsValid(id: Shape) bool;
 pub extern fn b2Shape_GetType(shapeId: Shape) ShapeType;
@@ -3662,23 +3794,23 @@ pub extern fn b2Shape_ArePreSolveEventsEnabled(shapeId: Shape) bool;
 pub extern fn b2Shape_EnableHitEvents(shapeId: Shape, flag: bool) void;
 pub extern fn b2Shape_AreHitEventsEnabled(shapeId: Shape) bool;
 pub extern fn b2Shape_TestPoint(shapeId: Shape, point: Vec2) bool;
-pub extern fn b2Shape_RayCast(shapeId: Shape, input: *const b2RayCastInput) b2CastOutput;
-pub extern fn b2Shape_GetCircle(shapeId: Shape) b2Circle;
-pub extern fn b2Shape_GetSegment(shapeId: Shape) b2Segment;
-pub extern fn b2Shape_GetChainSegment(shapeId: Shape) b2ChainSegment;
-pub extern fn b2Shape_GetCapsule(shapeId: Shape) b2Capsule;
-pub extern fn b2Shape_GetPolygon(shapeId: Shape) b2Polygon;
-pub extern fn b2Shape_SetCircle(shapeId: Shape, circle: *const b2Circle) void;
-pub extern fn b2Shape_SetCapsule(shapeId: Shape, capsule: *const b2Capsule) void;
-pub extern fn b2Shape_SetSegment(shapeId: Shape, segment: *const b2Segment) void;
-pub extern fn b2Shape_SetPolygon(shapeId: Shape, polygon: *const b2Polygon) void;
+pub extern fn b2Shape_RayCast(shapeId: Shape, input: *const RayCastInput) CastOutput;
+pub extern fn b2Shape_GetCircle(shapeId: Shape) Circle;
+pub extern fn b2Shape_GetSegment(shapeId: Shape) Segment;
+pub extern fn b2Shape_GetChainSegment(shapeId: Shape) ChainSegment;
+pub extern fn b2Shape_GetCapsule(shapeId: Shape) Capsule;
+pub extern fn b2Shape_GetPolygon(shapeId: Shape) Polygon;
+pub extern fn b2Shape_SetCircle(shapeId: Shape, circle: *const Circle) void;
+pub extern fn b2Shape_SetCapsule(shapeId: Shape, capsule: *const Capsule) void;
+pub extern fn b2Shape_SetSegment(shapeId: Shape, segment: *const Segment) void;
+pub extern fn b2Shape_SetPolygon(shapeId: Shape, polygon: *const Polygon) void;
 pub extern fn b2Shape_GetParentChain(shapeId: Shape) Chain;
 pub extern fn b2Shape_GetContactCapacity(shapeId: Shape) c_int;
 pub extern fn b2Shape_GetContactData(shapeId: Shape, contactData: [*]ContactData, capacity: c_int) c_int;
 pub extern fn b2Shape_GetSensorCapacity(shapeId: Shape) c_int;
 pub extern fn b2Shape_GetSensorOverlaps(shapeId: Shape, overlaps: [*]Shape, capacity: c_int) c_int;
 pub extern fn b2Shape_GetAABB(shapeId: Shape) AABB;
-pub extern fn b2Shape_GetMassData(shapeId: Shape) b2MassData;
+pub extern fn b2Shape_GetMassData(shapeId: Shape) MassData;
 pub extern fn b2Shape_GetClosestPoint(shapeId: Shape, target: Vec2) Vec2;
 pub extern fn b2CreateChain(bodyId: Body, def: *const ChainDef) Chain;
 pub extern fn b2DestroyChain(chainId: Chain) void;
