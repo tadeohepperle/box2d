@@ -616,11 +616,71 @@ pub const CosSin = struct_b2CosSin;
 pub const struct_b2Rot = extern struct {
     c: f32 = 0.0,
     s: f32 = 0.0,
+
+    const Self = @This();
+
+    pub fn make(radians: f32) Self {
+        return b2MakeRot(radians);
+    }
+    pub fn computeBetweenUnitVectors(v1: Vec2, v2: Vec2) Self {
+        return b2ComputeRotationBetweenUnitVectors(v1, v2);
+    }
+    pub fn isNormalized(self: Self) bool {
+        return b2IsNormalizedRot(self);
+    }
+    pub fn nlerp(q1: Self, q2: Self, t: f32) Self {
+        return b2NLerp(q1, q2, t);
+    }
+    pub fn computeAngularVelocity(q1: Self, q2: Self, inv_h: f32) f32 {
+        return b2ComputeAngularVelocity(q1, q2, inv_h);
+    }
+    pub fn getAngle(self: Self) f32 {
+        return b2Rot_GetAngle(self);
+    }
+    pub fn getXAxis(self: Self) Vec2 {
+        return b2Rot_GetXAxis(self);
+    }
+    pub fn getYAxis(self: Self) Vec2 {
+        return b2Rot_GetYAxis(self);
+    }
+    pub fn mul(self: Self, r: Self) Self {
+        return b2MulRot(self, r);
+    }
+    pub fn invMul(self: Self, r: Self) Self {
+        return b2InvMulRot(self, r);
+    }
+    pub fn relativeAngle(b: Self, a: Self) f32 {
+        return b2RelativeAngle(b, a);
+    }
+    pub fn unwindAngle(radians: f32) f32 {
+        return b2UnwindAngle(radians);
+    }
+    pub fn rotateVector(self: Self, v: Vec2) Vec2 {
+        return b2RotateVector(self, v);
+    }
+    pub fn invRotateVector(self: Self, v: Vec2) Vec2 {
+        return b2InvRotateVector(self, v);
+    }
 };
 pub const Rot = struct_b2Rot;
 pub const struct_b2Transform = extern struct {
     p: Vec2 = Vec2{},
     q: Rot = Rot{},
+
+    const Self = @This();
+
+    pub fn transformPoint(self: Self, point: Vec2) Vec2 {
+        return b2TransformPoint(self, point);
+    }
+    pub fn invTransformPoint(self: Self, point: Vec2) Vec2 {
+        return b2InvTransformPoint(self, point);
+    }
+    pub fn mul(self: Self, other: Self) Self {
+        return b2MulTransforms(self, other);
+    }
+    pub fn invMul(self: Self, other: Self) Self {
+        return b2InvMulTransforms(self, other);
+    }
 };
 pub const Transform = struct_b2Transform;
 pub const struct_b2Mat22 = extern struct {
@@ -3617,17 +3677,162 @@ pub const b2_colorBox2DBlue: c_int = 3190463;
 pub const b2_colorBox2DGreen: c_int = 9226532;
 pub const b2_colorBox2DYellow: c_int = 16772748;
 pub const enum_b2HexColor = c_uint;
-pub const b2HexColor = enum_b2HexColor;
+pub const HexColor = enum(enum_b2HexColor) {
+    alice_blue = 15792383,
+    antique_white = 16444375,
+    aqua = 65535,
+    aquamarine = 8388564,
+    azure = 15794175,
+    beige = 16119260,
+    bisque = 16770244,
+    black = 0,
+    blanched_almond = 16772045,
+    blue = 255,
+    blue_violet = 9055202,
+    brown = 10824234,
+    burlywood = 14596231,
+    cadet_blue = 6266528,
+    chartreuse = 8388352,
+    chocolate = 13789470,
+    coral = 16744272,
+    cornflower_blue = 6591981,
+    cornsilk = 16775388,
+    crimson = 14423100,
+    dark_blue = 139,
+    dark_cyan = 35723,
+    dark_golden_rod = 12092939,
+    dark_gray = 11119017,
+    dark_green = 25600,
+    dark_khaki = 12433259,
+    dark_magenta = 9109643,
+    dark_olive_green = 5597999,
+    dark_orange = 16747520,
+    dark_orchid = 10040012,
+    dark_red = 9109504,
+    dark_salmon = 15308410,
+    dark_sea_green = 9419919,
+    dark_slate_blue = 4734347,
+    dark_slate_gray = 3100495,
+    dark_turquoise = 52945,
+    dark_violet = 9699539,
+    deep_pink = 16716947,
+    deep_sky_blue = 49151,
+    dim_gray = 6908265,
+    dodger_blue = 2003199,
+    fire_brick = 11674146,
+    floral_white = 16775920,
+    forest_green = 2263842,
+    fuchsia = 16711935,
+    gainsboro = 14474460,
+    ghost_white = 16316671,
+    gold = 16766720,
+    golden_rod = 14329120,
+    gray = 8421504,
+    green = 32768,
+    green_yellow = 11403055,
+    honey_dew = 15794160,
+    hot_pink = 16738740,
+    indian_red = 13458524,
+    indigo = 4915330,
+    ivory = 16777200,
+    khaki = 15787660,
+    lavender = 15132410,
+    lavender_blush = 16773365,
+    lawn_green = 8190976,
+    lemon_chiffon = 16775885,
+    light_blue = 11393254,
+    light_coral = 15761536,
+    light_cyan = 14745599,
+    light_golden_rod_yellow = 16448210,
+    light_gray = 13882323,
+    light_green = 9498256,
+    light_pink = 16758465,
+    light_salmon = 16752762,
+    light_sea_green = 2142890,
+    light_sky_blue = 8900346,
+    light_slate_gray = 7833753,
+    light_steel_blue = 11584734,
+    light_yellow = 16777184,
+    lime = 65280,
+    lime_green = 3329330,
+    linen = 16445670,
+    maroon = 8388608,
+    medium_aqua_marine = 6737322,
+    medium_blue = 205,
+    medium_orchid = 12211667,
+    medium_purple = 9662683,
+    medium_sea_green = 3978097,
+    medium_slate_blue = 8087790,
+    medium_spring_green = 64154,
+    medium_turquoise = 4772300,
+    medium_violet_red = 13047173,
+    midnight_blue = 1644912,
+    mint_cream = 16121850,
+    misty_rose = 16770273,
+    moccasin = 16770229,
+    navajo_white = 16768685,
+    navy = 128,
+    old_lace = 16643558,
+    olive = 8421376,
+    olive_drab = 7048739,
+    orange = 16753920,
+    orange_red = 16729344,
+    orchid = 14315734,
+    pale_golden_rod = 15657130,
+    pale_green = 10025880,
+    pale_turquoise = 11529966,
+    pale_violet_red = 14381203,
+    papaya_whip = 16773077,
+    peach_puff = 16767673,
+    peru = 13468991,
+    pink = 16761035,
+    plum = 14524637,
+    powder_blue = 11591910,
+    purple = 8388736,
+    rebecca_purple = 6697881,
+    red = 16711680,
+    rosy_brown = 12357519,
+    royal_blue = 4286945,
+    saddle_brown = 9127187,
+    salmon = 16416882,
+    sandy_brown = 16032864,
+    sea_green = 3050327,
+    sea_shell = 16774638,
+    sienna = 10506797,
+    silver = 12632256,
+    sky_blue = 8900331,
+    slate_blue = 6970061,
+    slate_gray = 7372944,
+    snow = 16775930,
+    spring_green = 65407,
+    steel_blue = 4620980,
+    tan = 13808780,
+    teal = 32896,
+    thistle = 14204888,
+    tomato = 16737095,
+    turquoise = 4251856,
+    violet = 15631086,
+    wheat = 16113331,
+    white = 16777215,
+    white_smoke = 16119285,
+    yellow = 16776960,
+    yellow_green = 10145074,
+    box2d_red = 14430514,
+    box2d_blue = 3190463,
+    box2d_green = 9226532,
+    box2d_yellow = 16772748,
+    _,
+};
 pub const struct_b2DebugDraw = extern struct {
-    DrawPolygonFcn: ?*const fn ([*c]const Vec2, c_int, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn ([*c]const Vec2, c_int, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawSolidPolygonFcn: ?*const fn (Transform, [*c]const Vec2, c_int, f32, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Transform, [*c]const Vec2, c_int, f32, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawCircleFcn: ?*const fn (Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawSolidCircleFcn: ?*const fn (Transform, f32, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Transform, f32, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawSolidCapsuleFcn: ?*const fn (Vec2, Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Vec2, Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawSegmentFcn: ?*const fn (Vec2, Vec2, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Vec2, Vec2, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawTransformFcn: ?*const fn (Transform, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Transform, ?*anyopaque) callconv(.c) void),
-    DrawPointFcn: ?*const fn (Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Vec2, f32, b2HexColor, ?*anyopaque) callconv(.c) void),
-    DrawStringFcn: ?*const fn (Vec2, [*c]const u8, b2HexColor, ?*anyopaque) callconv(.c) void = zeroes(?*const fn (Vec2, [*c]const u8, b2HexColor, ?*anyopaque) callconv(.c) void),
+    DrawPolygonFcn: ?*const fn ([*]const Vec2, c_int, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawSolidPolygonFcn: ?*const fn (Transform, [*]const Vec2, c_int, f32, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawCircleFcn: ?*const fn (Vec2, f32, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawSolidCircleFcn: ?*const fn (Transform, f32, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawSolidCapsuleFcn: ?*const fn (Vec2, Vec2, f32, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawSegmentFcn: ?*const fn (Vec2, Vec2, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawTransformFcn: ?*const fn (Transform, ?*anyopaque) callconv(.c) void = null,
+    DrawPointFcn: ?*const fn (Vec2, f32, HexColor, ?*anyopaque) callconv(.c) void = null,
+    DrawStringFcn: ?*const fn (Vec2, [*:0]const u8, HexColor, ?*anyopaque) callconv(.c) void = null,
     drawingBounds: AABB = zeroes(AABB),
     useDrawingBounds: bool = false,
     drawShapes: bool = false,
