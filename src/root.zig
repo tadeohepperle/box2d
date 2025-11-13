@@ -2523,7 +2523,7 @@ pub const DistanceJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const DistanceJointDef) Self {
@@ -2601,7 +2601,7 @@ pub const MotorJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
     pub fn create(worldId: World, def: *const MotorJointDef) Self {
         return b2CreateMotorJoint(worldId, def);
@@ -2645,7 +2645,7 @@ pub const MouseJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const MouseJointDef) Self {
@@ -2684,7 +2684,7 @@ pub const FilterJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const FilterJointDef) Self {
@@ -2699,7 +2699,7 @@ pub const PrismaticJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const PrismaticJointDef) Self {
@@ -2780,7 +2780,7 @@ pub const RevoluteJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const RevoluteJointDef) Self {
@@ -2858,7 +2858,7 @@ pub const WeldJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const WeldJointDef) Self {
@@ -2897,7 +2897,7 @@ pub const WheelJoint = enum(u64) {
 
     // accesses inner value:
     pub inline fn joint(self: Self) Joint {
-        return @bitCast(self);
+        return @enumFromInt(@as(u64, @intFromEnum(self)));
     }
 
     pub fn create(worldId: World, def: *const WheelJointDef) Self {
